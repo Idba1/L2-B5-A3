@@ -3,14 +3,62 @@ import { Book } from '../models/book.model';
 
 export const bookRoutes = express.Router();
 
+// bookRoutes.post('/', async (req: Request, res: Response) => {
+//     try {
+//         const book = await Book.create(req.body);
+//         res.status(201).json({ success: true, message: 'Book created successfully', data: book });
+//     } catch (error) {
+//         res.status(400).json({ success: false, message: 'Validation failed', error });
+//     }
+// });
+
 bookRoutes.post('/', async (req: Request, res: Response) => {
     try {
         const book = await Book.create(req.body);
-        res.status(201).json({ success: true, message: 'Book created successfully', data: book });
-    } catch (error) {
-        res.status(400).json({ success: false, message: 'Validation failed', error });
+        res.status(201).json({
+            success: true,
+            message: 'Book created successfully',
+            data: book
+        });
+    } catch (error: any) {
+        if (error.name === 'ValidationError') {
+            const formattedErrors: Record<string, any> = {};
+
+            for (const field in error.errors) {
+                const err = error.errors[field];
+
+                const cleanedProps = { ...err.properties };
+                delete cleanedProps.path;
+                delete cleanedProps.value;
+
+                formattedErrors[field] = {
+                    message: err.message,
+                    name: err.name,
+                    properties: cleanedProps,
+                    kind: err.kind,
+                    path: err.path,
+                    value: err.value
+                };
+            }
+
+            res.status(400).json({
+                message: 'Validation failed',
+                success: false,
+                error: {
+                    name: error.name,
+                    errors: formattedErrors
+                }
+            });
+        } else {
+            res.status(500).json({
+                message: 'Something went wrong',
+                success: false,
+                error: error.message || error
+            });
+        }
     }
 });
+
 
 bookRoutes.get('/', async (req: Request, res: Response) => {
     const { filter, sortBy = 'createdAt', sort = 'asc', limit = 10 } = req.query;
