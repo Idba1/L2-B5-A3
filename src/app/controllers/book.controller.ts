@@ -3,22 +3,28 @@ import { Book } from '../models/book.model';
 
 export const bookRoutes = express.Router();
 
-// bookRoutes.post('/', async (req: Request, res: Response) => {
-//     try {
-//         const book = await Book.create(req.body);
-//         res.status(201).json({ success: true, message: 'Book created successfully', data: book });
-//     } catch (error) {
-//         res.status(400).json({ success: false, message: 'Validation failed', error });
-//     }
-// });
 
 bookRoutes.post('/', async (req: Request, res: Response) => {
     try {
         const book = await Book.create(req.body);
+
+        const responseData = {
+            _id: book._id,
+            title: book.title,
+            author: book.author,
+            genre: book.genre,
+            isbn: book.isbn,
+            description: book.description,
+            copies: book.copies,
+            available: book.available,
+            createdAt: book.createdAt,
+            updatedAt: book.updatedAt
+        };
+
         res.status(201).json({
             success: true,
             message: 'Book created successfully',
-            data: book
+            data: responseData
         });
     } catch (error: any) {
         if (error.name === 'ValidationError') {
