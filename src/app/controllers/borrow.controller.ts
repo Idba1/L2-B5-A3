@@ -39,7 +39,7 @@ borrowRoutes.post('/', async (req: Request, res: Response) => {
 
 borrowRoutes.get('/', async (_req: Request, res: Response) => {
     try {
-        const summary = await Borrow.aggregate([
+        const summaryRaw = await Borrow.aggregate([
             {
                 $group: {
                     _id: '$book',
@@ -54,17 +54,16 @@ borrowRoutes.get('/', async (_req: Request, res: Response) => {
                     as: 'bookInfo'
                 }
             },
-            { $unwind: '$bookInfo' },
-            {
-                $project: {
-                    book: {
-                        title: '$bookInfo.title',
-                        isbn: '$bookInfo.isbn'
-                    },
-                    totalQuantity: 1
-                }
-            }
+            { $unwind: '$bookInfo' }
         ]);
+
+        const summary = summaryRaw.map(entry => ({
+            book: {
+                title: entry.bookInfo.title,
+                isbn: entry.bookInfo.isbn
+            },
+            totalQuantity: entry.totalQuantity
+        }));
 
         res.json({
             success: true,
