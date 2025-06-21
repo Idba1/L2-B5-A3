@@ -66,15 +66,6 @@ bookRoutes.post('/', async (req: Request, res: Response) => {
 });
 
 
-// bookRoutes.get('/', async (req: Request, res: Response) => {
-//     const { filter, sortBy = 'createdAt', sort = 'asc', limit = 10 } = req.query;
-//     const query: any = {};
-//     if (filter) query.genre = filter;
-//     const books = await Book.find(query).sort({ [sortBy as string]: sort === 'asc' ? 1 : -1 }).limit(Number(limit));
-//     res.json({ success: true, message: 'Books retrieved successfully', data: books });
-// });
-
-
 bookRoutes.get('/', async (req: Request, res: Response) => {
     const { filter, sortBy = 'createdAt', sort = 'asc', limit = 100 } = req.query;
     const query: any = {};
