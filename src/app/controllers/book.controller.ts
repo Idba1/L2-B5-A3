@@ -66,23 +66,51 @@ bookRoutes.post('/', async (req: Request, res: Response) => {
 });
 
 
+// bookRoutes.get('/', async (req: Request, res: Response) => {
+//     const { filter, sortBy = 'createdAt', sort = 'asc', limit = 10 } = req.query;
+//     const query: any = {};
+//     if (filter) query.genre = filter;
+//     const books = await Book.find(query).sort({ [sortBy as string]: sort === 'asc' ? 1 : -1 }).limit(Number(limit));
+//     res.json({ success: true, message: 'Books retrieved successfully', data: books });
+// });
+
+
 bookRoutes.get('/', async (req: Request, res: Response) => {
-    const { filter, sortBy = 'createdAt', sort = 'asc', limit = 10 } = req.query;
+    const { filter, sortBy = 'createdAt', sort = 'asc', limit = 100 } = req.query;
     const query: any = {};
+
     if (filter) query.genre = filter;
-    const books = await Book.find(query).sort({ [sortBy as string]: sort === 'asc' ? 1 : -1 }).limit(Number(limit));
-    res.json({ success: true, message: 'Books retrieved successfully', data: books });
+
+    const books = await Book.find(query)
+        .sort({ [sortBy as string]: sort === 'asc' ? 1 : -1 })
+        .limit(Number(limit));
+
+    const formattedBooks = books.map(book => ({
+        _id: book._id,
+        title: book.title,
+        author: book.author,
+        genre: book.genre,
+        isbn: book.isbn,
+        description: book.description,
+        copies: book.copies,
+        available: book.available,
+        createdAt: book.createdAt,
+        updatedAt: book.updatedAt
+    }));
+
+    res.json({
+        success: true,
+        message: 'Books retrieved successfully',
+        data: formattedBooks
+    });
 });
+
 
 bookRoutes.get('/:bookId', async (req: Request, res: Response) => {
     const book = await Book.findById(req.params.bookId);
     res.json({ success: true, message: 'Book retrieved successfully', data: book });
 });
 
-// bookRoutes.put('/:bookId', async (req: Request, res: Response) => {
-//     const book = await Book.findByIdAndUpdate(req.params.bookId, req.body, { new: true });
-//     res.json({ success: true, message: 'Book updated successfully', data: book });
-// });
 
 bookRoutes.put('/:bookId', async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
