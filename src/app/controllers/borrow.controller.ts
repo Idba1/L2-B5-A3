@@ -1,15 +1,17 @@
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { Borrow } from '../models/borrow.model';
-import { Book } from '../models/book.model';
+// import { Book } from '../models/book.model';
+import { Book, IBookDocument } from '../models/book.model';
 
 export const borrowRoutes = express.Router();
 
 
-borrowRoutes.post('/', async (req: Request, res: Response) => {
+borrowRoutes.post('/', async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const { book: bookId, quantity, dueDate } = req.body;
 
-        const book = await Book.findById(bookId);
+        // const book = await Book.findById(bookId);
+        const book = await Book.findById(bookId) as IBookDocument;
         if (!book) return res.status(404).json({ success: false, message: 'Book not found' });
 
         if (book.copies < quantity) {
