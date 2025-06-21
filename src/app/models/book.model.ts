@@ -1,7 +1,11 @@
-import { model, Schema } from 'mongoose';
+import { Schema, model, Document } from 'mongoose';
 import { IBook } from '../interfaces/book.interface';
 
-const bookSchema = new Schema<IBook>(
+export interface IBookDocument extends IBook, Document {
+    updateAvailability(): void;
+}
+
+const bookSchema = new Schema<IBookDocument>(
     {
         title: { type: String, required: true },
         author: { type: String, required: true },
@@ -27,4 +31,4 @@ bookSchema.pre('save', function (next) {
     next();
 });
 
-export const Book = model<IBook>('Book', bookSchema);
+export const Book = model<IBookDocument>('Book', bookSchema);
