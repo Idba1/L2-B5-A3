@@ -67,33 +67,52 @@ bookRoutes.post('/', async (req: Request, res: Response) => {
 
 
 bookRoutes.get('/', async (req: Request, res: Response) => {
-    const { filter, sortBy = 'createdAt', sort = 'asc', limit = 100 } = req.query;
-    const query: any = {};
+    try {
+        const {
+            page = '1',
+            limit = '10',
+            filter,
+            search,
+            sortBy = 'createdAt',
+            sort = 'asc',
+        } = req.query as Record<string, string>;
 
-    if (filter) query.genre = filter;
+        const pageNum = Math.max(parseInt(page) || 1, 1);
+        const pageSize = Math.max(parseInt(limit) || 10, 1);
+        const skip = (pageNum - 1) * pageSize;
 
-    const books = await Book.find(query)
-        .sort({ [sortBy as string]: sort === 'asc' ? 1 : -1 })
-        .limit(Number(limit));
+        /* build query */
+        const query: any = {};
+        if (filter) query.genre = filter;
+        if (search)
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { author: { $regex: search, $options: 'i' } },
+            ];
 
-    const formattedBooks = books.map(book => ({
-        _id: book._id,
-        title: book.title,
-        author: book.author,
-        genre: book.genre,
-        isbn: book.isbn,
-        description: book.description,
-        copies: book.copies,
-        available: book.available,
-        createdAt: book.createdAt,
-        updatedAt: book.updatedAt
-    }));
+        const [books, total] = await Promise.all([
+            Book.find(query)
+                .sort({ [sortBy]: sort === 'asc' ? 1 : -1 })
+                .skip(skip)
+                .limit(pageSize)
+                .exec(),
+            Book.countDocuments(query).exec(),
+        ]);
 
-    res.json({
-        success: true,
-        message: 'Books retrieved successfully',
-        data: formattedBooks
-    });
+        res.json({
+            success: true,
+            message: 'Books retrieved successfully',
+            data: books,
+            pagination: {
+                total,
+                page: pageNum,
+                limit: pageSize,
+                totalPages: Math.ceil(total / pageSize),
+            },
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to fetch books', error: err });
+    }
 });
 
 

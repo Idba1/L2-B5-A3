@@ -36,45 +36,37 @@ borrowRoutes.post('/', async (req: Request, res: Response, next: NextFunction): 
     }
 });
 
-
-borrowRoutes.get('/', async (_req: Request, res: Response) => {
+borrowRoutes.get('/list', async (req: Request, res: Response) => {
     try {
-        const summaryRaw = await Borrow.aggregate([
-            {
-                $group: {
-                    _id: '$book',
-                    totalQuantity: { $sum: '$quantity' }
-                }
-            },
-            {
-                $lookup: {
-                    from: 'books',
-                    localField: '_id',
-                    foreignField: '_id',
-                    as: 'bookInfo'
-                }
-            },
-            { $unwind: '$bookInfo' }
-        ]);
+        const pageNum = Math.max(parseInt(String(req.query.page)) || 1, 1);
+        const pageSize = Math.max(parseInt(String(req.query.limit)) || 10, 1);
+        const skip = (pageNum - 1) * pageSize;
 
-        const summary = summaryRaw.map(entry => ({
-            book: {
-                title: entry.bookInfo.title,
-                isbn: entry.bookInfo.isbn
-            },
-            totalQuantity: entry.totalQuantity
-        }));
+        const [borrows, total] = await Promise.all([
+            Borrow.find()
+                .skip(skip)
+                .limit(pageSize)
+                .populate('book', 'title isbn copies')
+                .exec(),
+            Borrow.countDocuments().exec(),
+        ]);
 
         res.json({
             success: true,
-            message: 'Borrowed books summary retrieved successfully',
-            data: summary
+            message: 'Borrow records retrieved successfully',
+            data: borrows,
+            pagination: {
+                total,
+                page: pageNum,
+                limit: pageSize,
+                totalPages: Math.ceil(total / pageSize),
+            },
         });
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Failed to retrieve summary',
-            error
+            message: 'Failed to retrieve borrow records',
+            error,
         });
     }
 });

@@ -8,7 +8,7 @@ import { borrowRoutes } from './app/controllers/borrow.controller';
 const app = express();
 
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
+    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'https://book-lovers-iota.vercel.app'],
     credentials: true
 }));
 
